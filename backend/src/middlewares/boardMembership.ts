@@ -11,24 +11,26 @@ declare global {
   }
 }
 
-export async function requireBoardMembership(req: Request, _res: Response, next: NextFunction) {
-  const boardId = req.params.id as string;
-  const userId = req.userId as string;
+export function requireBoardMembership(boardIdParam = "id") {
+  return async function (req: Request, _res: Response, next: NextFunction) {
+    const boardId = req.params[boardIdParam] as string;
+    const userId = req.userId as string;
 
-  const board = await prisma.board.findUnique({ where: { id: boardId } });
+    const board = await prisma.board.findUnique({ where: { id: boardId } });
 
-  if (!board) {
-    throw new AppError("board nao encontrado", 404);
-  }
+    if (!board) {
+      throw new AppError("board nao encontrado", 404);
+    }
 
-  const membership = await prisma.boardMember.findUnique({
-    where: { boardId_userId: { boardId, userId } },
-  });
+    const membership = await prisma.boardMember.findUnique({
+      where: { boardId_userId: { boardId, userId } },
+    });
 
-  if (!membership) {
-    throw new AppError("usuario nao e membro deste board", 403);
-  }
+    if (!membership) {
+      throw new AppError("usuario nao e membro deste board", 403);
+    }
 
-  req.board = board;
-  next();
+    req.board = board;
+    next();
+  };
 }
