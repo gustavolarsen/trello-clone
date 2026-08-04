@@ -142,3 +142,62 @@ describe("GET /boards/:boardId/lists", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("PATCH /boards/:boardId/lists/:listId", () => {
+  async function createList(token: string, boardId: string, title = "A Fazer") {
+    const response = await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title });
+
+    return response.body.id as string;
+  }
+
+  it("edita o titulo da lista", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+    const listId = await createList(token, boardId);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/${listId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Novo titulo" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ title: "Novo titulo" });
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+    const boardId = await createBoard(tokenA);
+    const listId = await createList(tokenA, boardId);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/${listId}`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .send({ title: "Novo titulo" });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando a lista nao existe no board", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/id-inexistente`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Novo titulo" });
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app)
+      .patch("/boards/id-qualquer/lists/id-qualquer")
+      .send({ title: "x" });
+
+    expect(response.status).toBe(401);
+  });
+});
