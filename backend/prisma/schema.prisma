@@ -8,9 +8,30 @@ datasource db {
 }
 
 model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  createdAt    DateTime      @default(now())
+  boardMembers BoardMember[]
+}
+
+model Board {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  color       String
+  createdAt   DateTime      @default(now())
+  members     BoardMember[]
+}
+
+model BoardMember {
   id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
+  boardId   String
+  userId    String
   createdAt DateTime @default(now())
+  board     Board    @relation(fields: [boardId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([boardId, userId])
 }
