@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler.js";
-import { createBoardSchema, updateBoardSchema } from "./boards.schema.js";
+import { addMemberSchema, createBoardSchema, updateBoardSchema } from "./boards.schema.js";
 import {
+  addMember,
   createBoard,
   deleteBoard,
   getBoardById,
@@ -44,4 +45,15 @@ export async function update(req: Request, res: Response) {
 export async function remove(req: Request, res: Response) {
   await deleteBoard(req.params.id as string, req.userId as string);
   res.status(204).send();
+}
+
+export async function addMemberByEmail(req: Request, res: Response) {
+  const parsed = addMemberSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? "dados invalidos", 400);
+  }
+
+  const membership = await addMember(req.params.id as string, req.userId as string, parsed.data);
+  res.status(201).json(membership);
 }

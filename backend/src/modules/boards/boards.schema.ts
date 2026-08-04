@@ -15,3 +15,9 @@ export const updateBoardSchema = z.object({
 });
 
 export type UpdateBoardInput = z.infer<typeof updateBoardSchema>;
+
+export const addMemberSchema = z.object({
+  email: z.email("email invalido"),
+});
+
+export type AddMemberInput = z.infer<typeof addMemberSchema>;
