@@ -201,3 +201,63 @@ describe("PATCH /boards/:boardId/lists/:listId", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("PATCH /boards/:boardId/lists/:listId/archive", () => {
+  async function createList(token: string, boardId: string, title = "A Fazer") {
+    const response = await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title });
+
+    return response.body.id as string;
+  }
+
+  it("arquiva a lista e ela some da listagem padrao", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+    const listId = await createList(token, boardId);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/${listId}/archive`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ archived: true });
+
+    const listResponse = await request(app)
+      .get(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.body).toHaveLength(0);
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+    const boardId = await createBoard(tokenA);
+    const listId = await createList(tokenA, boardId);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/${listId}/archive`)
+      .set("Authorization", `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando a lista nao existe no board", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/id-inexistente/archive`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).patch("/boards/id-qualquer/lists/id-qualquer/archive");
+
+    expect(response.status).toBe(401);
+  });
+});
