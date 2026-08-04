@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import request from "supertest";
 import { afterEach, describe, expect, it } from "vitest";
 import app from "../../app.js";
@@ -21,5 +22,20 @@ describe("POST /auth/register", () => {
       email: "maria@example.com",
     });
     expect(response.body.id).toBeTypeOf("string");
+  });
+
+  it("salva a senha com hash, nunca em texto puro", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const userInDb = await prisma.user.findUniqueOrThrow({
+      where: { email: "maria@example.com" },
+    });
+
+    expect(userInDb.password).not.toBe("senha123");
+    expect(await bcrypt.compare("senha123", userInDb.password)).toBe(true);
   });
 });
