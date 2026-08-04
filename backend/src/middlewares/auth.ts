@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "../lib/token.js";
 import { AppError } from "./errorHandler.js";
 
 declare global {
@@ -21,7 +21,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   const token = authHeader.slice("Bearer ".length);
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { sub: string };
+    const payload = verifyToken(token);
     req.userId = payload.sub;
     next();
   } catch {

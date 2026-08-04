@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { AppError } from "../../middlewares/errorHandler.js";
 import { prisma } from "../../lib/prisma.js";
+import { generateToken } from "../../lib/token.js";
 import type { LoginInput, RegisterInput } from "./auth.schema.js";
 
 const SALT_ROUNDS = 10;
@@ -41,9 +41,7 @@ export async function loginUser(input: LoginInput) {
     throw new AppError("credenciais invalidas", 401);
   }
 
-  const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET as string, {
-    expiresIn: "7d",
-  });
+  const token = generateToken({ sub: user.id });
 
   return { token };
 }
