@@ -188,3 +188,60 @@ describe("GET /boards/:id", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("PATCH /boards/:id", () => {
+  it("edita titulo, descricao e cor quando o usuario e membro", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .patch(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Novo titulo", description: "Nova descricao", color: "#000000" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      title: "Novo titulo",
+      description: "Nova descricao",
+      color: "#000000",
+    });
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .patch(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .send({ title: "Novo titulo" });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando o board nao existe", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const response = await request(app)
+      .patch("/boards/id-inexistente")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Novo titulo" });
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).patch("/boards/id-qualquer").send({ title: "x" });
+
+    expect(response.status).toBe(401);
+  });
+});
