@@ -84,3 +84,21 @@ describe("POST /auth/register", () => {
     expect(response.status).toBe(400);
   });
 });
+
+describe("POST /auth/login", () => {
+  it("retorna um token jwt para credenciais validas", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const response = await request(app).post("/auth/login").send({
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.token).toBeTypeOf("string");
+  });
+});
