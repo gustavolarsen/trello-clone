@@ -93,3 +93,52 @@ describe("POST /boards/:boardId/lists", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("GET /boards/:boardId/lists", () => {
+  it("lista as listas do board ordenadas por posicao", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+
+    await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "A Fazer" });
+    await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Em Progresso" });
+    await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Concluido" });
+
+    const response = await request(app)
+      .get(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.map((list: { title: string }) => list.title)).toEqual([
+      "A Fazer",
+      "Em Progresso",
+      "Concluido",
+    ]);
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+    const boardId = await createBoard(tokenA);
+
+    const response = await request(app)
+      .get(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).get("/boards/id-qualquer/lists");
+
+    expect(response.status).toBe(401);
+  });
+});
