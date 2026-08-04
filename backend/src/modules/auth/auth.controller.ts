@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler.js";
 import { loginSchema, registerSchema } from "./auth.schema.js";
-import { loginUser, registerUser } from "./auth.service.js";
+import { getUserById, loginUser, registerUser } from "./auth.service.js";
 
 export async function register(req: Request, res: Response) {
   const parsed = registerSchema.safeParse(req.body);
@@ -23,4 +23,9 @@ export async function login(req: Request, res: Response) {
 
   const result = await loginUser(parsed.data);
   res.status(200).json(result);
+}
+
+export async function me(req: Request, res: Response) {
+  const user = await getUserById(req.userId as string);
+  res.status(200).json(user);
 }
