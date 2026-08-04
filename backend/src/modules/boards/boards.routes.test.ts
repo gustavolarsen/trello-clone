@@ -245,3 +245,55 @@ describe("PATCH /boards/:id", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("DELETE /boards/:id", () => {
+  it("exclui o board quando o usuario e membro", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .delete(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(204);
+
+    const boardInDb = await prisma.board.findUnique({ where: { id: createResponse.body.id } });
+    expect(boardInDb).toBeNull();
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .delete(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando o board nao existe", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const response = await request(app)
+      .delete("/boards/id-inexistente")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).delete("/boards/id-qualquer");
+
+    expect(response.status).toBe(401);
+  });
+});
