@@ -369,3 +369,73 @@ describe("POST /boards/:id/members", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("DELETE /boards/:id/members/:userId", () => {
+  it("remove um membro do board", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+    await registerAndLogin("convidada@example.com");
+    const convidada = await prisma.user.findUniqueOrThrow({
+      where: { email: "convidada@example.com" },
+    });
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    await request(app)
+      .post(`/boards/${createResponse.body.id}/members`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ email: "convidada@example.com" });
+
+    const response = await request(app)
+      .delete(`/boards/${createResponse.body.id}/members/${convidada.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(204);
+
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        boardId_userId: { boardId: createResponse.body.id, userId: convidada.id },
+      },
+    });
+
+    expect(membership).toBeNull();
+  });
+
+  it("retorna 403 quando quem remove nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const userA = await prisma.user.findUniqueOrThrow({
+      where: { email: "board-owner@example.com" },
+    });
+
+    const response = await request(app)
+      .delete(`/boards/${createResponse.body.id}/members/${userA.id}`)
+      .set("Authorization", `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando o board nao existe", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const response = await request(app)
+      .delete("/boards/id-inexistente/members/id-qualquer")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).delete("/boards/id-qualquer/members/id-qualquer");
+
+    expect(response.status).toBe(401);
+  });
+});
