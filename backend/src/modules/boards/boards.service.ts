@@ -1,6 +1,6 @@
 import { AppError } from "../../middlewares/errorHandler.js";
 import { prisma } from "../../lib/prisma.js";
-import type { CreateBoardInput } from "./boards.schema.js";
+import type { CreateBoardInput, UpdateBoardInput } from "./boards.schema.js";
 
 export async function createBoard(input: CreateBoardInput, ownerId: string) {
   const board = await prisma.board.create({
@@ -15,6 +15,15 @@ export async function createBoard(input: CreateBoardInput, ownerId: string) {
   });
 
   return board;
+}
+
+export async function updateBoard(boardId: string, userId: string, input: UpdateBoardInput) {
+  await getBoardById(boardId, userId);
+
+  return prisma.board.update({
+    where: { id: boardId },
+    data: input,
+  });
 }
 
 export async function listBoardsForUser(userId: string) {

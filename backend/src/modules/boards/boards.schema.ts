@@ -7,3 +7,11 @@ export const createBoardSchema = z.object({
 });
 
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;
+
+export const updateBoardSchema = z.object({
+  title: z.string().min(1, "titulo e obrigatorio").optional(),
+  description: z.string().optional(),
+  color: z.string().min(1, "cor e obrigatoria").optional(),
+});
+
+export type UpdateBoardInput = z.infer<typeof updateBoardSchema>;
