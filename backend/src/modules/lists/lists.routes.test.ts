@@ -261,3 +261,61 @@ describe("PATCH /boards/:boardId/lists/:listId/archive", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("PATCH /boards/:boardId/lists/reorder", () => {
+  async function createList(token: string, boardId: string, title = "A Fazer") {
+    const response = await request(app)
+      .post(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title });
+
+    return response.body.id as string;
+  }
+
+  it("reordena as listas do board", async () => {
+    const token = await registerAndLogin();
+    const boardId = await createBoard(token);
+    const listAId = await createList(token, boardId, "A Fazer");
+    const listBId = await createList(token, boardId, "Em Progresso");
+    const listCId = await createList(token, boardId, "Concluido");
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/reorder`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ listIds: [listCId, listAId, listBId] });
+
+    expect(response.status).toBe(200);
+
+    const listResponse = await request(app)
+      .get(`/boards/${boardId}/lists`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.body.map((list: { title: string }) => list.title)).toEqual([
+      "Concluido",
+      "A Fazer",
+      "Em Progresso",
+    ]);
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+    const boardId = await createBoard(tokenA);
+    const listId = await createList(tokenA, boardId);
+
+    const response = await request(app)
+      .patch(`/boards/${boardId}/lists/reorder`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .send({ listIds: [listId] });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app)
+      .patch("/boards/id-qualquer/lists/reorder")
+      .send({ listIds: [] });
+
+    expect(response.status).toBe(401);
+  });
+});
