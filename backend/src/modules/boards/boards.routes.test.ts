@@ -297,3 +297,75 @@ describe("DELETE /boards/:id", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("POST /boards/:id/members", () => {
+  it("adiciona um usuario cadastrado como membro do board", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+    await registerAndLogin("convidada@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .post(`/boards/${createResponse.body.id}/members`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ email: "convidada@example.com" });
+
+    expect(response.status).toBe(201);
+
+    const convidada = await prisma.user.findUniqueOrThrow({
+      where: { email: "convidada@example.com" },
+    });
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        boardId_userId: { boardId: createResponse.body.id, userId: convidada.id },
+      },
+    });
+
+    expect(membership).not.toBeNull();
+  });
+
+  it("retorna 404 quando o email convidado nao esta cadastrado", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .post(`/boards/${createResponse.body.id}/members`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ email: "naoexiste@example.com" });
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 403 quando quem convida nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+    await registerAndLogin("convidada@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .post(`/boards/${createResponse.body.id}/members`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .send({ email: "convidada@example.com" });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app)
+      .post("/boards/id-qualquer/members")
+      .send({ email: "x@example.com" });
+
+    expect(response.status).toBe(401);
+  });
+});
