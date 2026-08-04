@@ -12,3 +12,10 @@ export async function createList(boardId: string, input: CreateListInput) {
     },
   });
 }
+
+export async function listListsForBoard(boardId: string) {
+  return prisma.list.findMany({
+    where: { boardId },
+    orderBy: { position: "asc" },
+  });
+}

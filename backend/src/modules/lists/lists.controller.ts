@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler.js";
 import { createListSchema } from "./lists.schema.js";
-import { createList } from "./lists.service.js";
+import { createList, listListsForBoard } from "./lists.service.js";
 
 export async function create(req: Request, res: Response) {
   const parsed = createListSchema.safeParse(req.body);
@@ -12,4 +12,9 @@ export async function create(req: Request, res: Response) {
 
   const list = await createList(req.params.boardId as string, parsed.data);
   res.status(201).json(list);
+}
+
+export async function list(req: Request, res: Response) {
+  const lists = await listListsForBoard(req.params.boardId as string);
+  res.status(200).json(lists);
 }
