@@ -7,6 +7,7 @@ import {
   deleteBoard,
   getBoardById,
   listBoardsForUser,
+  removeMember,
   updateBoard,
 } from "./boards.service.js";
 
@@ -56,4 +57,9 @@ export async function addMemberByEmail(req: Request, res: Response) {
 
   const membership = await addMember(req.params.id as string, req.userId as string, parsed.data);
   res.status(201).json(membership);
+}
+
+export async function removeMemberById(req: Request, res: Response) {
+  await removeMember(req.params.id as string, req.userId as string, req.params.userId as string);
+  res.status(204).send();
 }

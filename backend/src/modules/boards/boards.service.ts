@@ -47,6 +47,12 @@ export async function addMember(boardId: string, requesterId: string, input: Add
   });
 }
 
+export async function removeMember(boardId: string, requesterId: string, memberUserId: string) {
+  await getBoardById(boardId, requesterId);
+
+  await prisma.boardMember.deleteMany({ where: { boardId, userId: memberUserId } });
+}
+
 export async function listBoardsForUser(userId: string) {
   return prisma.board.findMany({
     where: { members: { some: { userId } } },
