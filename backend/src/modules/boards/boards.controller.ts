@@ -1,7 +1,13 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler.js";
 import { createBoardSchema, updateBoardSchema } from "./boards.schema.js";
-import { createBoard, getBoardById, listBoardsForUser, updateBoard } from "./boards.service.js";
+import {
+  createBoard,
+  deleteBoard,
+  getBoardById,
+  listBoardsForUser,
+  updateBoard,
+} from "./boards.service.js";
 
 export async function create(req: Request, res: Response) {
   const parsed = createBoardSchema.safeParse(req.body);
@@ -33,4 +39,9 @@ export async function update(req: Request, res: Response) {
 
   const board = await updateBoard(req.params.id as string, req.userId as string, parsed.data);
   res.status(200).json(board);
+}
+
+export async function remove(req: Request, res: Response) {
+  await deleteBoard(req.params.id as string, req.userId as string);
+  res.status(204).send();
 }

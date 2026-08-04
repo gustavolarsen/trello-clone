@@ -26,6 +26,13 @@ export async function updateBoard(boardId: string, userId: string, input: Update
   });
 }
 
+export async function deleteBoard(boardId: string, userId: string) {
+  await getBoardById(boardId, userId);
+
+  await prisma.boardMember.deleteMany({ where: { boardId } });
+  await prisma.board.delete({ where: { id: boardId } });
+}
+
 export async function listBoardsForUser(userId: string) {
   return prisma.board.findMany({
     where: { members: { some: { userId } } },
