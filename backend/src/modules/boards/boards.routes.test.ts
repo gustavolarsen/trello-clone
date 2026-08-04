@@ -107,3 +107,34 @@ describe("POST /boards", () => {
     expect(membership).not.toBeNull();
   });
 });
+
+describe("GET /boards", () => {
+  it("lista apenas os boards em que o usuario e membro", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+
+    await request(app).post("/boards").set("Authorization", `Bearer ${tokenA}`).send({
+      title: "Board da Maria",
+      color: "#FF5733",
+    });
+
+    await request(app).post("/boards").set("Authorization", `Bearer ${tokenB}`).send({
+      title: "Board da Outra",
+      color: "#33FF57",
+    });
+
+    const response = await request(app)
+      .get("/boards")
+      .set("Authorization", `Bearer ${tokenA}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({ title: "Board da Maria" });
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).get("/boards");
+
+    expect(response.status).toBe(401);
+  });
+});
