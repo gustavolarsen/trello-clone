@@ -10,8 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "pretest": "cross-env DATABASE_URL=file:./test.db prisma migrate deploy",
-    "test": "cross-env DATABASE_URL=file:./test.db vitest run",
-    "test:watch": "cross-env DATABASE_URL=file:./test.db vitest"
+    "test": "cross-env DATABASE_URL=file:./test.db JWT_SECRET=test-secret vitest run",
+    "test:watch": "cross-env DATABASE_URL=file:./test.db JWT_SECRET=test-secret vitest"
   },
   "keywords": [],
   "author": "",
