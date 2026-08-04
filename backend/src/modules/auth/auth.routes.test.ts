@@ -101,4 +101,28 @@ describe("POST /auth/login", () => {
     expect(response.status).toBe(200);
     expect(response.body.token).toBeTypeOf("string");
   });
+
+  it("retorna 401 quando a senha esta incorreta", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const response = await request(app).post("/auth/login").send({
+      email: "maria@example.com",
+      password: "senhaerrada",
+    });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("retorna 401 quando o email nao esta cadastrado", async () => {
+    const response = await request(app).post("/auth/login").send({
+      email: "naoexiste@example.com",
+      password: "senha123",
+    });
+
+    expect(response.status).toBe(401);
+  });
 });
