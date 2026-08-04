@@ -138,3 +138,53 @@ describe("GET /boards", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("GET /boards/:id", () => {
+  it("retorna o board quando o usuario e membro", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .get(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ title: "Board da Maria" });
+  });
+
+  it("retorna 403 quando o usuario nao e membro do board", async () => {
+    const tokenA = await registerAndLogin("board-owner@example.com");
+    const tokenB = await registerAndLogin("outra-usuaria@example.com");
+
+    const createResponse = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ title: "Board da Maria", color: "#FF5733" });
+
+    const response = await request(app)
+      .get(`/boards/${createResponse.body.id}`)
+      .set("Authorization", `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("retorna 404 quando o board nao existe", async () => {
+    const token = await registerAndLogin("board-owner@example.com");
+
+    const response = await request(app)
+      .get("/boards/id-inexistente")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).get("/boards/id-qualquer");
+
+    expect(response.status).toBe(401);
+  });
+});
