@@ -23,6 +23,7 @@ model Board {
   color       String
   createdAt   DateTime      @default(now())
   members     BoardMember[]
+  lists       List[]
 }
 
 model BoardMember {
@@ -34,4 +35,14 @@ model BoardMember {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([boardId, userId])
+}
+
+model List {
+  id        String   @id @default(cuid())
+  title     String
+  position  Int
+  archived  Boolean  @default(false)
+  boardId   String
+  createdAt DateTime @default(now())
+  board     Board    @relation(fields: [boardId], references: [id])
 }
