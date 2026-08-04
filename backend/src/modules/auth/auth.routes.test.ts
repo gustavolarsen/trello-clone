@@ -38,4 +38,33 @@ describe("POST /auth/register", () => {
     expect(userInDb.password).not.toBe("senha123");
     expect(await bcrypt.compare("senha123", userInDb.password)).toBe(true);
   });
+
+  it("retorna 400 quando o email e invalido", async () => {
+    const response = await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "nao-e-um-email",
+      password: "senha123",
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("retorna 400 quando a senha e muito curta", async () => {
+    const response = await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "123",
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("retorna 400 quando o nome esta ausente", async () => {
+    const response = await request(app).post("/auth/register").send({
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    expect(response.status).toBe(400);
+  });
 });
