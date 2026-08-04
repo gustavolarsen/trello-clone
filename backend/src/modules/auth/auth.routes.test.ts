@@ -67,4 +67,20 @@ describe("POST /auth/register", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("retorna 400 quando o email ja esta cadastrado", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const response = await request(app).post("/auth/register").send({
+      name: "Outra Maria",
+      email: "maria@example.com",
+      password: "outrasenha",
+    });
+
+    expect(response.status).toBe(400);
+  });
 });
