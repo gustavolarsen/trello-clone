@@ -5,7 +5,6 @@ import {
   addMember,
   createBoard,
   deleteBoard,
-  getBoardById,
   listBoardsForUser,
   removeMember,
   updateBoard,
@@ -28,8 +27,7 @@ export async function list(req: Request, res: Response) {
 }
 
 export async function getById(req: Request, res: Response) {
-  const board = await getBoardById(req.params.id as string, req.userId as string);
-  res.status(200).json(board);
+  res.status(200).json(req.board);
 }
 
 export async function update(req: Request, res: Response) {
@@ -39,12 +37,12 @@ export async function update(req: Request, res: Response) {
     throw new AppError(parsed.error.issues[0]?.message ?? "dados invalidos", 400);
   }
 
-  const board = await updateBoard(req.params.id as string, req.userId as string, parsed.data);
+  const board = await updateBoard(req.params.id as string, parsed.data);
   res.status(200).json(board);
 }
 
 export async function remove(req: Request, res: Response) {
-  await deleteBoard(req.params.id as string, req.userId as string);
+  await deleteBoard(req.params.id as string);
   res.status(204).send();
 }
 
@@ -55,11 +53,11 @@ export async function addMemberByEmail(req: Request, res: Response) {
     throw new AppError(parsed.error.issues[0]?.message ?? "dados invalidos", 400);
   }
 
-  const membership = await addMember(req.params.id as string, req.userId as string, parsed.data);
+  const membership = await addMember(req.params.id as string, parsed.data);
   res.status(201).json(membership);
 }
 
 export async function removeMemberById(req: Request, res: Response) {
-  await removeMember(req.params.id as string, req.userId as string, req.params.userId as string);
+  await removeMember(req.params.id as string, req.params.userId as string);
   res.status(204).send();
 }
