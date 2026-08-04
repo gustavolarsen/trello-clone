@@ -15,3 +15,9 @@ export async function createBoard(input: CreateBoardInput, ownerId: string) {
 
   return board;
 }
+
+export async function listBoardsForUser(userId: string) {
+  return prisma.board.findMany({
+    where: { members: { some: { userId } } },
+  });
+}
