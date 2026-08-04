@@ -9,7 +9,7 @@ afterEach(async () => {
   await prisma.user.deleteMany();
 });
 
-async function registerAndLogin(email = "maria@example.com") {
+async function registerAndLogin(email = "board-owner@example.com") {
   await request(app).post("/auth/register").send({
     name: "Maria Silva",
     email,
