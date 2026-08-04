@@ -10,6 +10,6 @@ export async function create(req: Request, res: Response) {
     throw new AppError(parsed.error.issues[0]?.message ?? "dados invalidos", 400);
   }
 
-  const board = await createBoard(parsed.data);
+  const board = await createBoard(parsed.data, req.userId as string);
   res.status(201).json(board);
 }
