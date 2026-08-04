@@ -80,4 +80,30 @@ describe("POST /boards", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("torna o criador membro do board automaticamente", async () => {
+    const token = await registerAndLogin();
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: "board-owner@example.com" },
+    });
+
+    const response = await request(app)
+      .post("/boards")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Projeto X",
+        color: "#FF5733",
+      });
+
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        boardId_userId: {
+          boardId: response.body.id,
+          userId: user.id,
+        },
+      },
+    });
+
+    expect(membership).not.toBeNull();
+  });
 });
