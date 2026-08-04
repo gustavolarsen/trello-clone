@@ -126,3 +126,35 @@ describe("POST /auth/login", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("GET /auth/me", () => {
+  it("retorna os dados do usuario autenticado", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Maria Silva",
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: "maria@example.com",
+      password: "senha123",
+    });
+
+    const response = await request(app)
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${loginResponse.body.token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      name: "Maria Silva",
+      email: "maria@example.com",
+    });
+    expect(response.body.password).toBeUndefined();
+  });
+
+  it("retorna 401 sem token de autenticacao", async () => {
+    const response = await request(app).get("/auth/me");
+
+    expect(response.status).toBe(401);
+  });
+});
