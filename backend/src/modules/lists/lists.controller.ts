@@ -1,7 +1,13 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler.js";
-import { createListSchema, updateListSchema } from "./lists.schema.js";
-import { archiveList, createList, listListsForBoard, updateList } from "./lists.service.js";
+import { createListSchema, reorderListsSchema, updateListSchema } from "./lists.schema.js";
+import {
+  archiveList,
+  createList,
+  listListsForBoard,
+  reorderLists,
+  updateList,
+} from "./lists.service.js";
 
 export async function create(req: Request, res: Response) {
   const parsed = createListSchema.safeParse(req.body);
@@ -37,4 +43,15 @@ export async function update(req: Request, res: Response) {
 export async function archive(req: Request, res: Response) {
   const list = await archiveList(req.params.boardId as string, req.params.listId as string);
   res.status(200).json(list);
+}
+
+export async function reorder(req: Request, res: Response) {
+  const parsed = reorderListsSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? "dados invalidos", 400);
+  }
+
+  const lists = await reorderLists(req.params.boardId as string, parsed.data);
+  res.status(200).json(lists);
 }

@@ -11,3 +11,9 @@ export const updateListSchema = z.object({
 });
 
 export type UpdateListInput = z.infer<typeof updateListSchema>;
+
+export const reorderListsSchema = z.object({
+  listIds: z.array(z.string().min(1)),
+});
+
+export type ReorderListsInput = z.infer<typeof reorderListsSchema>;

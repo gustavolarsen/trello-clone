@@ -1,6 +1,6 @@
 import { AppError } from "../../middlewares/errorHandler.js";
 import { prisma } from "../../lib/prisma.js";
-import type { CreateListInput, UpdateListInput } from "./lists.schema.js";
+import type { CreateListInput, ReorderListsInput, UpdateListInput } from "./lists.schema.js";
 
 export async function createList(boardId: string, input: CreateListInput) {
   const listCount = await prisma.list.count({ where: { boardId } });
@@ -47,4 +47,17 @@ export async function archiveList(boardId: string, listId: string) {
     where: { id: listId },
     data: { archived: true },
   });
+}
+
+export async function reorderLists(boardId: string, input: ReorderListsInput) {
+  await Promise.all(
+    input.listIds.map((listId, position) =>
+      prisma.list.updateMany({
+        where: { id: listId, boardId },
+        data: { position },
+      }),
+    ),
+  );
+
+  return listListsForBoard(boardId);
 }
