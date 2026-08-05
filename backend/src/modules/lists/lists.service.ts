@@ -1,5 +1,6 @@
 import { AppError } from "../../middlewares/errorHandler.js";
 import { prisma } from "../../lib/prisma.js";
+import { nextPosition, positionsFromOrder } from "../../lib/position.js";
 import type { CreateListInput, ReorderListsInput, UpdateListInput } from "./lists.schema.js";
 
 export async function createList(boardId: string, input: CreateListInput) {
@@ -9,7 +10,7 @@ export async function createList(boardId: string, input: CreateListInput) {
     data: {
       title: input.title,
       boardId,
-      position: listCount,
+      position: nextPosition(listCount),
     },
   });
 }
@@ -50,10 +51,12 @@ export async function archiveList(boardId: string, listId: string) {
 }
 
 export async function reorderLists(boardId: string, input: ReorderListsInput) {
+  const positions = positionsFromOrder(input.listIds);
+
   await Promise.all(
-    input.listIds.map((listId, position) =>
+    positions.map(({ id, position }) =>
       prisma.list.updateMany({
-        where: { id: listId, boardId },
+        where: { id, boardId },
         data: { position },
       }),
     ),
